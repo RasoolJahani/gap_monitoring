@@ -1,0 +1,15 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: default
+  group_by: ['alertname', 'service']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+receivers:
+  - name: default
+    # Wire email/Slack/PagerDuty here, e.g.:
+    # webhook_configs:
+    #   - url: 'https://hooks.slack.com/services/...'

@@ -1,0 +1,175 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager:9093"]
+
+rule_files:
+  - /etc/prometheus/alert.rules.yml
+
+# Development scrape config — host.docker.internal for JTAPI, Asterisk, etc.
+
+scrape_configs:
+  - job_name: node_exporter
+    static_configs:
+      - targets: ["node-exporter:9100"]
+        labels:
+          category: infrastructure
+          service: host
+
+  - job_name: gap_backend_metrics
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["api-gateway:3000"]
+        labels:
+          stack: gap_backend
+          service: api-gateway
+      - targets: ["auth-service:9101"]
+        labels:
+          stack: gap_backend
+          service: auth-service
+      - targets: ["user-service:9102"]
+        labels:
+          stack: gap_backend
+          service: user-service
+      - targets: ["cucm-service:9103"]
+        labels:
+          stack: gap_backend
+          service: cucm-service
+      - targets: ["cdr-service:9104"]
+        labels:
+          stack: gap_backend
+          service: cdr-service
+      - targets: ["file-service:9105"]
+        labels:
+          stack: gap_backend
+          service: file-service
+      - targets: ["config-service:9106"]
+        labels:
+          stack: gap_backend
+          service: config-service
+      - targets: ["cdr-processor:3004"]
+        labels:
+          stack: gap_backend
+          service: cdr-processor
+      - targets: ["recording-watcher:9107"]
+        labels:
+          stack: gap_backend
+          service: recording-watcher
+      - targets: ["host.docker.internal:9108"]
+        labels:
+          stack: gap_backend
+          service: asterisk-service
+
+  - job_name: jtapi_bridge_metrics
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["host.docker.internal:8081"]
+        labels:
+          stack: gap_jtapi_bridge
+          service: jtapi-bridge
+
+  - job_name: blackbox_http_health
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets: ["http://api-gateway:3000/health"]
+        labels:
+          service: api-gateway
+          category: backend
+      - targets: ["http://auth-service:9101/health"]
+        labels:
+          service: auth-service
+          category: backend
+      - targets: ["http://user-service:9102/health"]
+        labels:
+          service: user-service
+          category: backend
+      - targets: ["http://cucm-service:9103/health"]
+        labels:
+          service: cucm-service
+          category: backend
+      - targets: ["http://cdr-service:9104/health"]
+        labels:
+          service: cdr-service
+          category: backend
+      - targets: ["http://file-service:9105/health"]
+        labels:
+          service: file-service
+          category: backend
+      - targets: ["http://config-service:9106/health"]
+        labels:
+          service: config-service
+          category: backend
+      - targets: ["http://cdr-processor:3004/health"]
+        labels:
+          service: cdr-processor
+          category: backend
+      - targets: ["http://recording-watcher:9107/health"]
+        labels:
+          service: recording-watcher
+          category: backend
+      - targets: ["http://host.docker.internal:9108/health"]
+        labels:
+          service: asterisk-service
+          category: backend
+      - targets: ["http://host.docker.internal:8081/health"]
+        labels:
+          service: jtapi-bridge
+          category: integration
+    relabel_configs: &blackbox_relabel
+      - source_labels: [__address__]
+        target_label: __param_target
+      - target_label: __address__
+        replacement: blackbox-exporter:9115
+      - source_labels: [__param_target]
+        target_label: probe_target
+
+  - job_name: blackbox_frontend_health
+    metrics_path: /probe
+    params:
+      module: [http_frontend]
+    static_configs:
+      - targets: ["http://user-panel:80/"]
+        labels:
+          service: user-panel
+          category: frontend
+      - targets: ["http://admin-panel:80/"]
+        labels:
+          service: admin-panel
+          category: frontend
+    relabel_configs: *blackbox_relabel
+
+  - job_name: blackbox_tcp_health
+    metrics_path: /probe
+    params:
+      module: [tcp_connect]
+    static_configs:
+      - targets: ["nats:4222"]
+        labels:
+          service: nats
+          category: infrastructure
+      - targets: ["redis:6379"]
+        labels:
+          service: redis
+          category: infrastructure
+      - targets: ["postgres:5432"]
+        labels:
+          service: postgres
+          category: infrastructure
+    relabel_configs: *blackbox_relabel
+  - job_name: blackbox_ssl_expiry
+    metrics_path: /probe
+    params:
+      module: [https_ssl]
+    static_configs:
+      - targets:
+          - "https://REPLACE_WITH_ADMIN_PANEL_FQDN/"
+        labels:
+          service: admin-panel
+          category: frontend
+    relabel_configs: *blackbox_relabel

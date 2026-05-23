@@ -1,0 +1,35 @@
+modules:
+  http_2xx:
+    prober: http
+    timeout: 5s
+    http:
+      valid_http_versions: ['HTTP/1.1', 'HTTP/2.0']
+      valid_status_codes: [200]
+      method: GET
+      preferred_ip_protocol: ip4
+
+  # Frontends may return 200/301/302/304 for SPA shell and nginx.
+  http_frontend:
+    prober: http
+    timeout: 5s
+    http:
+      valid_http_versions: ['HTTP/1.1', 'HTTP/2.0']
+      valid_status_codes: [200, 301, 302, 304]
+      method: GET
+      preferred_ip_protocol: ip4
+
+  tcp_connect:
+    prober: tcp
+    timeout: 5s
+
+  # HTTPS probe for TLS handshake + certificate expiry (probe_ssl_earliest_cert_expiry).
+  https_ssl:
+    prober: http
+    timeout: 10s
+    http:
+      valid_http_versions: ['HTTP/1.1', 'HTTP/2.0']
+      valid_status_codes: [200, 301, 302, 303, 307, 308]
+      method: GET
+      preferred_ip_protocol: ip4
+      fail_if_ssl: false
+      fail_if_not_ssl: true

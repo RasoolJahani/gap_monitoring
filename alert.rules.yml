@@ -1,0 +1,123 @@
+groups:
+  - name: gaptel_host
+    rules:
+      - alert: HighCpuUsage
+        expr: |
+          100 - (
+            avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100
+          ) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'High CPU usage on {{ $labels.instance }}'
+          description: 'CPU usage has been above 80% for 5 minutes (current {{ $value | printf "%.1f" }}%).'
+
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            1 - (
+              node_memory_MemAvailable_bytes
+              / node_memory_MemTotal_bytes
+            )
+          ) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'High memory usage on {{ $labels.instance }}'
+          description: 'Memory usage has been above 80% for 5 minutes (current {{ $value | printf "%.1f" }}%).'
+
+  - name: gaptel_jtapi
+    rules:
+      - alert: JtapiDisconnected
+        expr: jtapi_connection_status == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: jtapi-bridge
+        annotations:
+          summary: 'JTAPI provider disconnected'
+          description: 'JTAPI connection status has been 0 for more than 1 minute. Wallboard call events may be stale.'
+
+      - alert: HighConcurrentCalls
+        expr: jtapi_concurrent_calls > 500
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'High concurrent call volume'
+          description: 'More than 500 concurrent JTAPI calls tracked for 5 minutes.'
+
+  - name: gaptel_auth
+    rules:
+      - alert: HighFailedLoginRate
+        expr: |
+          (
+            sum(rate(auth_failures_total[5m]))
+            / sum(rate(auth_attempts_total[5m]))
+          ) > 0.5
+          and sum(rate(auth_attempts_total[5m])) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+          service: auth-service
+        annotations:
+          summary: 'Elevated failed login rate (possible brute-force)'
+          description: 'More than 50% of login attempts failed over the last 5 minutes with sustained traffic.'
+
+  - name: gaptel_ssl
+    rules:
+      - alert: SslCertificateExpiringSoon
+        expr: |
+          (
+            probe_ssl_earliest_cert_expiry{job="blackbox_ssl_expiry"} - time()
+          ) / 86400 < 14
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: 'TLS certificate expiring soon for {{ $labels.probe_target }}'
+          description: 'Certificate expires in less than 14 days ({{ $value | printf "%.0f" }} days remaining).'
+
+  - name: gaptel_api
+    rules:
+      - alert: HighApiErrorRate
+        expr: |
+          (
+            sum(rate(http_request_errors_total{service="api-gateway"}[5m]))
+            / sum(rate(http_requests_total{service="api-gateway"}[5m]))
+          ) > 0.05
+          and sum(rate(http_requests_total{service="api-gateway"}[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: api-gateway
+        annotations:
+          summary: 'High API error rate on api-gateway'
+          description: 'More than 5% of HTTP responses are 4xx/5xx over the last 5 minutes.'
+
+      - alert: HighApiLatencyP95
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum(rate(http_request_duration_seconds_bucket{service="api-gateway"}[5m])) by (le)
+          ) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: api-gateway
+        annotations:
+          summary: 'High API P95 latency on api-gateway'
+          description: 'P95 request latency exceeds 2 seconds for 5 minutes.'
+
+  - name: gaptel_probes
+    rules:
+      - alert: BlackboxProbeDown
+        expr: probe_success{job=~"blackbox_.*"} == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: '{{ $labels.service }} probe failed'
+          description: 'Blackbox probe {{ $labels.probe_target }} has been down for 2 minutes.'
