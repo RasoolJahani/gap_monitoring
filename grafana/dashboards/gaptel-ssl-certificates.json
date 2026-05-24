@@ -1,0 +1,443 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "panels": [],
+      "title": "Overview",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
+      "description": "Minimum days until any monitored certificate expires.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 7 },
+              { "color": "yellow", "value": 14 },
+              { "color": "green", "value": 30 }
+            ]
+          },
+          "unit": "d"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 0, "y": 1 },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "expr": "min((probe_ssl_earliest_cert_expiry{job=\"blackbox_ssl_expiry\"} - time()) / 86400)",
+          "refId": "A"
+        }
+      ],
+      "title": "Soonest expiry (days left)",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": { "color": "red", "index": 0, "text": "N/A" }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 6, "y": 1 },
+      "id": 2,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "expr": "sum(probe_success{job=\"blackbox_ssl_expiry\"})",
+          "refId": "A"
+        }
+      ],
+      "title": "Healthy probes",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 12, "y": 1 },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "expr": "count((probe_ssl_earliest_cert_expiry{job=\"blackbox_ssl_expiry\"} - time()) / 86400 < 30)",
+          "refId": "A"
+        }
+      ],
+      "title": "Certs expiring within 30 days",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 6, "x": 18, "y": 1 },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "expr": "count((probe_ssl_earliest_cert_expiry{job=\"blackbox_ssl_expiry\"} - time()) / 86400 < 14)",
+          "refId": "A"
+        }
+      ],
+      "title": "Certs expiring within 14 days",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 6 },
+      "id": 101,
+      "panels": [],
+      "title": "Certificate details",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
+      "description": "User panel and main page share the same hostname (gaptel.co) and typically the same TLS certificate.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" },
+            "inspect": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Days left" },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "red", "value": null },
+                    { "color": "orange", "value": 7 },
+                    { "color": "yellow", "value": 14 },
+                    { "color": "green", "value": 30 }
+                  ]
+                }
+              },
+              { "id": "decimals", "value": 1 },
+              { "id": "custom.cellOptions", "value": { "mode": "gradient", "type": "color-background" } },
+              { "id": "unit", "value": "d" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Expires at" },
+            "properties": [
+              { "id": "unit", "value": "dateTimeAsIso" },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "from": 0,
+                      "to": 946684800000,
+                      "result": { "color": "text", "index": 0, "text": "—" }
+                    },
+                    "type": "range"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Probe OK" },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "0": { "color": "red", "index": 0, "text": "FAIL" },
+                      "1": { "color": "green", "index": 1, "text": "OK" }
+                    },
+                    "type": "value"
+                  }
+                ]
+              },
+              { "id": "custom.cellOptions", "value": { "mode": "basic", "type": "color-background" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "TLS probe (s)" },
+            "properties": [
+              { "id": "unit", "value": "s" },
+              { "id": "decimals", "value": 3 }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 7 },
+      "id": 10,
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "showHeader": true,
+        "sortBy": [{ "desc": false, "displayName": "Days left" }]
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [
+        {
+          "expr": "(probe_ssl_earliest_cert_expiry{job=\"blackbox_ssl_expiry\"} - time()) / 86400",
+          "format": "table",
+          "instant": true,
+          "refId": "days"
+        },
+        {
+          "expr": "probe_ssl_earliest_cert_expiry{job=\"blackbox_ssl_expiry\"} * 1000",
+          "format": "table",
+          "instant": true,
+          "refId": "expiry"
+        },
+        {
+          "expr": "probe_success{job=\"blackbox_ssl_expiry\"}",
+          "format": "table",
+          "instant": true,
+          "refId": "success"
+        },
+        {
+          "expr": "probe_duration_seconds{job=\"blackbox_ssl_expiry\"}",
+          "format": "table",
+          "instant": true,
+          "refId": "duration"
+        },
+        {
+          "expr": "probe_tls_version_info{job=\"blackbox_ssl_expiry\"}",
+          "format": "table",
+          "instant": true,
+          "refId": "tls"
+        }
+      ],
+      "title": "SSL certificates by panel",
+      "transformations": [
+        { "id": "seriesToColumns", "options": { "byField": "service" } },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Time 1": true,
+              "Time 2": true,
+              "Time 3": true,
+              "Time 4": true,
+              "__name__": true,
+              "__name__ 1": true,
+              "__name__ 2": true,
+              "__name__ 3": true,
+              "__name__ 4": true,
+              "instance": true,
+              "instance 1": true,
+              "instance 2": true,
+              "instance 3": true,
+              "instance 4": true,
+              "job": true,
+              "job 1": true,
+              "job 2": true,
+              "job 3": true,
+              "job 4": true,
+              "category": true,
+              "category 1": true,
+              "module": true,
+              "module 1": true,
+              "Value #tls": true
+            },
+            "indexByName": {
+              "panel": 0,
+              "service": 1,
+              "url": 2,
+              "Value #days": 3,
+              "Value #expiry": 4,
+              "Value #success": 5,
+              "version": 6,
+              "Value #duration": 7
+            },
+            "renameByName": {
+              "Value #days": "Days left",
+              "Value #duration": "TLS probe (s)",
+              "Value #expiry": "Expires at",
+              "Value #success": "Probe OK",
+              "panel": "Panel",
+              "url": "URL",
+              "service": "Service",
+              "version": "TLS version"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 17 },
+      "id": 102,
+      "panels": [],
+      "title": "Trend",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineWidth": 2,
+            "pointSize": 4,
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 7 },
+              { "color": "yellow", "value": 14 },
+              { "color": "green", "value": 30 }
+            ]
+          },
+          "unit": "d"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 18 },
+      "id": 20,
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "asc" }
+      },
+      "targets": [
+        {
+          "expr": "(probe_ssl_earliest_cert_expiry{job=\"blackbox_ssl_expiry\"} - time()) / 86400",
+          "legendFormat": "{{panel}} ({{probe_target}})",
+          "refId": "A"
+        }
+      ],
+      "title": "Days until certificate expiry",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 7, "w": 24, "x": 0, "y": 27 },
+      "id": 21,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true }
+      },
+      "targets": [
+        {
+          "expr": "probe_success{job=\"blackbox_ssl_expiry\"}",
+          "legendFormat": "{{panel}}",
+          "refId": "A"
+        }
+      ],
+      "title": "TLS probe success (1 = OK)",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "1m",
+  "schemaVersion": 39,
+  "tags": ["gaptel", "gap", "ssl", "tls", "certificates"],
+  "templating": { "list": [] },
+  "time": { "from": "now-7d", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "GapTel SSL certificates",
+  "uid": "gaptel-ssl-certificates",
+  "version": 2,
+  "weekStart": ""
+}

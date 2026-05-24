@@ -77,8 +77,20 @@ groups:
         labels:
           severity: warning
         annotations:
-          summary: 'TLS certificate expiring soon for {{ $labels.probe_target }}'
-          description: 'Certificate expires in less than 14 days ({{ $value | printf "%.0f" }} days remaining).'
+          summary: 'TLS certificate expiring soon for {{ $labels.panel | default $labels.service }} ({{ $labels.probe_target }})'
+          description: 'Certificate expires in less than 14 days ({{ $value | printf "%.1f" }} days remaining).'
+
+      - alert: SslCertificateExpiringCritical
+        expr: |
+          (
+            probe_ssl_earliest_cert_expiry{job="blackbox_ssl_expiry"} - time()
+          ) / 86400 < 7
+        for: 30m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'TLS certificate expiring within 7 days for {{ $labels.panel | default $labels.service }} ({{ $labels.probe_target }})'
+          description: 'Certificate expires in less than 7 days ({{ $value | printf "%.1f" }} days remaining).'
 
   - name: gaptel_api
     rules:

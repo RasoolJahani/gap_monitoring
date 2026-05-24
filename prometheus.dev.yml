@@ -163,13 +163,34 @@ scrape_configs:
           category: infrastructure
     relabel_configs: *blackbox_relabel
   - job_name: blackbox_ssl_expiry
+    scrape_interval: 60s
+    scrape_timeout: 20s
     metrics_path: /probe
     params:
-      module: [https_ssl]
+      module: [tls_cert]
     static_configs:
-      - targets:
-          - "https://REPLACE_WITH_ADMIN_PANEL_FQDN/"
+      - targets: ["admin.gaptel.co:443"]
         labels:
           service: admin-panel
+          panel: Admin panel
+          url: https://admin.gaptel.co/
           category: frontend
+      - targets: ["gaptel.co:443"]
+        labels:
+          service: user-panel
+          panel: User panel
+          url: https://gaptel.co/
+          category: frontend
+      - targets: ["gaptel.co:443"]
+        labels:
+          service: main-page
+          panel: Main page
+          url: https://gaptel.co/
+          category: frontend
+      - targets: ["api.gaptel.co:443"]
+        labels:
+          service: api-gateway
+          panel: API gateway
+          url: https://api.gaptel.co/
+          category: backend
     relabel_configs: *blackbox_relabel

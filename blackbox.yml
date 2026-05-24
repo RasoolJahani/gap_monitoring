@@ -22,13 +22,21 @@ modules:
     prober: tcp
     timeout: 5s
 
-  # HTTPS probe for TLS handshake + certificate expiry (probe_ssl_earliest_cert_expiry).
+  # TLS certificate check only (no HTTP status) — reliable for SPAs and APIs without a public /.
+  tls_cert:
+    prober: tcp
+    timeout: 15s
+    tcp:
+      tls: true
+      preferred_ip_protocol: ip4
+
+  # Legacy HTTP+TLS probe (kept for reference; do not use for api.gaptel.co — root returns 404).
   https_ssl:
     prober: http
-    timeout: 10s
+    timeout: 15s
     http:
       valid_http_versions: ['HTTP/1.1', 'HTTP/2.0']
-      valid_status_codes: [200, 301, 302, 303, 307, 308]
+      valid_status_codes: [200, 301, 302, 303, 307, 308, 404]
       method: GET
       preferred_ip_protocol: ip4
       fail_if_ssl: false

@@ -57,10 +57,11 @@ Production: expose Grafana via your reverse proxy; set `GF_SERVER_ROOT_URL` in `
 
 ## Dashboards
 
-| Dashboard                                | UID                   |
-| ---------------------------------------- | --------------------- |
-| GapTel overview                          | `gaptel-overview`     |
-| GapTel status board (wallboard + uptime) | `gaptel-status-board` |
+| Dashboard                                | UID                       |
+| ---------------------------------------- | ------------------------- |
+| GapTel overview                          | `gaptel-overview`         |
+| GapTel status board (wallboard + uptime) | `gaptel-status-board`     |
+| GapTel SSL certificates                  | `gaptel-ssl-certificates` |
 
 **Status board top row (PromQL):**
 
@@ -80,9 +81,10 @@ Production: expose Grafana via your reverse proxy; set `GF_SERVER_ROOT_URL` in `
 | `JtapiDisconnected`                      | `jtapi_connection_status == 0` for 1m                |
 | `HighFailedLoginRate`                    | > 50% failed auth attempts for 2m                    |
 | `SslCertificateExpiringSoon`             | TLS cert expires in < 14 days (blackbox `https_ssl`) |
+| `SslCertificateExpiringCritical`         | TLS cert expires in < 7 days                         |
 | `HighApiErrorRate` / `HighApiLatencyP95` | api-gateway HTTP metrics                             |
 
-Edit **`prometheus.yml`** job `blackbox_ssl_expiry` — replace `REPLACE_WITH_ADMIN_PANEL_FQDN` with your public HTTPS hostname.
+Public TLS certificates are checked via Blackbox **`tls_cert`** (TCP+TLS on port 443, no HTTP status) in job `blackbox_ssl_expiry`. Grafana **Expires at** uses `probe_ssl_earliest_cert_expiry * 1000` (Prometheus is seconds; Grafana dates need ms).
 
 Configure notification channels in **`alertmanager.yml`** (webhook, email, etc.).
 
