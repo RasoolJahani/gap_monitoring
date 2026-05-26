@@ -1,0 +1,508 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [
+    {
+      "icon": "external link",
+      "title": "SSL certificates",
+      "type": "link",
+      "url": "/d/gaptel-ssl-certificates/gaptel-ssl-certificates"
+    }
+  ],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "title": "Overview",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "decimals": 1,
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 75 },
+              { "color": "red", "value": 90 }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 8, "x": 0, "y": 1 },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "expr": "max(max by (mountpoint) (100 - ((node_filesystem_avail_bytes{job=\"node_exporter\", instance=~\"$instance\", fstype=~\"ext4|xfs|btrfs\", mountpoint!~\"/etc/(resolv|hostname)\"} / node_filesystem_size_bytes{job=\"node_exporter\", instance=~\"$instance\", fstype=~\"ext4|xfs|btrfs\", mountpoint!~\"/etc/(resolv|hostname)\"}) * 100)))",
+          "refId": "A"
+        }
+      ],
+      "title": "Highest disk use %",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "decimals": 1,
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 75 },
+              { "color": "red", "value": 90 }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 8, "x": 8, "y": 1 },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "expr": "(1 - (node_memory_MemAvailable_bytes{job=\"node_exporter\", instance=~\"$instance\"} / node_memory_MemTotal_bytes{job=\"node_exporter\", instance=~\"$instance\"})) * 100",
+          "refId": "A"
+        }
+      ],
+      "title": "Memory used %",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "decimals": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 8, "x": 16, "y": 1 },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "expr": "count(max by (mountpoint) (100 - ((node_filesystem_avail_bytes{job=\"node_exporter\", instance=~\"$instance\", fstype=~\"ext4|xfs|btrfs\", mountpoint!~\"/etc/(resolv|hostname)\"} / node_filesystem_size_bytes{job=\"node_exporter\", instance=~\"$instance\", fstype=~\"ext4|xfs|btrfs\", mountpoint!~\"/etc/(resolv|hostname)\"}) * 100)) > 90) or vector(0)",
+          "refId": "A"
+        }
+      ],
+      "title": "Filesystems above 90%",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 6 },
+      "id": 101,
+      "title": "Memory",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "decimals": 1,
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 75 },
+              { "color": "red", "value": 90 }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 7 },
+      "id": 10,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "targets": [
+        {
+          "expr": "(1 - (node_memory_MemAvailable_bytes{job=\"node_exporter\", instance=~\"$instance\"} / node_memory_MemTotal_bytes{job=\"node_exporter\", instance=~\"$instance\"})) * 100",
+          "refId": "A"
+        }
+      ],
+      "title": "Memory used %",
+      "type": "gauge"
+    },
+    {
+      "datasource": { "type": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "showPoints": "never"
+          },
+          "unit": "percent",
+          "decimals": 1,
+          "max": 100,
+          "min": 0
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 7, "w": 16, "x": 8, "y": 7 },
+      "id": 11,
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "expr": "(1 - (node_memory_MemAvailable_bytes{job=\"node_exporter\", instance=~\"$instance\"} / node_memory_MemTotal_bytes{job=\"node_exporter\", instance=~\"$instance\"})) * 100",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Memory used % over time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "decimals": 2,
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] },
+          "unit": "decgbytes"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 12, "x": 0, "y": 14 },
+      "id": 12,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "expr": "node_memory_MemTotal_bytes{job=\"node_exporter\", instance=~\"$instance\"}",
+          "legendFormat": "Total {{instance}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Memory total",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "decimals": 2,
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+          "unit": "decgbytes"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 12, "x": 12, "y": 14 },
+      "id": 13,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }
+      },
+      "targets": [
+        {
+          "expr": "node_memory_MemAvailable_bytes{job=\"node_exporter\", instance=~\"$instance\"}",
+          "legendFormat": "Available {{instance}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Memory available",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 18 },
+      "id": 102,
+      "title": "Disk",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus" },
+      "description": "Used space % on ext4/xfs. Green < 75%, yellow ≥ 75%, red ≥ 90%.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "decimals": 1,
+          "max": 100,
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 75 },
+              { "color": "red", "value": 90 }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 19 },
+      "id": 20,
+      "options": {
+        "displayMode": "gradient",
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "orientation": "horizontal",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showUnfilled": true,
+        "valueMode": "color"
+      },
+      "targets": [
+        {
+          "expr": "max by (mountpoint) (100 - ((node_filesystem_avail_bytes{job=\"node_exporter\", instance=~\"$instance\", fstype=~\"ext4|xfs|btrfs\", mountpoint!~\"/etc/(resolv|hostname)\"} / node_filesystem_size_bytes{job=\"node_exporter\", instance=~\"$instance\", fstype=~\"ext4|xfs|btrfs\", mountpoint!~\"/etc/(resolv|hostname)\"}) * 100))",
+          "legendFormat": "{{mountpoint}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Disk usage %",
+      "type": "bargauge"
+    },
+    {
+      "datasource": { "type": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "custom": { "align": "auto", "cellOptions": { "type": "auto" }, "inspect": false },
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Used %" },
+            "properties": [
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "green", "value": null },
+                    { "color": "yellow", "value": 75 },
+                    { "color": "red", "value": 90 }
+                  ]
+                }
+              },
+              { "id": "unit", "value": "percent" },
+              { "id": "decimals", "value": 1 },
+              { "id": "custom.cellOptions", "value": { "mode": "gradient", "type": "color-background" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Total (GB)" },
+            "properties": [{ "id": "unit", "value": "decgbytes" }, { "id": "decimals", "value": 2 }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Free (GB)" },
+            "properties": [{ "id": "unit", "value": "decgbytes" }, { "id": "decimals", "value": 2 }]
+          }
+        ]
+      },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 27 },
+      "id": 22,
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "show": false },
+        "showHeader": true,
+        "sortBy": [{ "desc": true, "displayName": "Used %" }]
+      },
+      "targets": [
+        {
+          "expr": "max by (mountpoint) (node_filesystem_size_bytes{job=\"node_exporter\", instance=~\"$instance\", fstype=~\"ext4|xfs|btrfs\", mountpoint!~\"/etc/(resolv|hostname)\"}) / 1024 / 1024 / 1024",
+          "format": "table",
+          "instant": true,
+          "refId": "total"
+        },
+        {
+          "expr": "max by (mountpoint) (node_filesystem_avail_bytes{job=\"node_exporter\", instance=~\"$instance\", fstype=~\"ext4|xfs|btrfs\", mountpoint!~\"/etc/(resolv|hostname)\"}) / 1024 / 1024 / 1024",
+          "format": "table",
+          "instant": true,
+          "refId": "free"
+        },
+        {
+          "expr": "max by (mountpoint) (100 - ((node_filesystem_avail_bytes{job=\"node_exporter\", instance=~\"$instance\", fstype=~\"ext4|xfs|btrfs\", mountpoint!~\"/etc/(resolv|hostname)\"} / node_filesystem_size_bytes{job=\"node_exporter\", instance=~\"$instance\", fstype=~\"ext4|xfs|btrfs\", mountpoint!~\"/etc/(resolv|hostname)\"}) * 100))",
+          "format": "table",
+          "instant": true,
+          "refId": "used_pct"
+        }
+      ],
+      "title": "Disk space by mountpoint",
+      "transformations": [
+        { "id": "seriesToColumns", "options": { "byField": "mountpoint" } },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Time 1": true,
+              "Time 2": true,
+              "__name__": true,
+              "__name__ 1": true,
+              "__name__ 2": true,
+              "fstype": true,
+              "fstype 1": true,
+              "fstype 2": true,
+              "instance": true,
+              "instance 1": true,
+              "instance 2": true,
+              "instance 3": true,
+              "job": true,
+              "job 1": true,
+              "job 2": true,
+              "job 3": true,
+              "category": true,
+              "category 1": true,
+              "category 2": true,
+              "category 3": true,
+              "service": true,
+              "service 1": true,
+              "service 2": true,
+              "service 3": true,
+              "device": true,
+              "device 1": true,
+              "device 2": true,
+              "device 3": true
+            },
+            "indexByName": {
+              "Mountpoint": 0,
+              "Total (GB)": 1,
+              "Free (GB)": 2,
+              "Used %": 3
+            },
+            "renameByName": {
+              "Value #free": "Free (GB)",
+              "Value #total": "Total (GB)",
+              "Value #used_pct": "Used %",
+              "mountpoint": "Mountpoint"
+            }
+          }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": ["Mountpoint", "Total (GB)", "Free (GB)", "Used %"]
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": { "type": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "lineWidth": 1,
+            "showPoints": "never"
+          },
+          "unit": "percent",
+          "decimals": 1,
+          "max": 100,
+          "min": 0
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 37 },
+      "id": 23,
+      "options": {
+        "legend": { "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi" }
+      },
+      "targets": [
+        {
+          "expr": "max by (mountpoint) (100 - ((node_filesystem_avail_bytes{job=\"node_exporter\", instance=~\"$instance\", fstype=~\"ext4|xfs|btrfs\", mountpoint!~\"/etc/(resolv|hostname)\"} / node_filesystem_size_bytes{job=\"node_exporter\", instance=~\"$instance\", fstype=~\"ext4|xfs|btrfs\", mountpoint!~\"/etc/(resolv|hostname)\"}) * 100))",
+          "legendFormat": "{{mountpoint}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Disk usage % over time",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["gaptel", "disk", "memory", "node-exporter", "host"],
+  "templating": {
+    "list": [
+      {
+        "allValue": ".*",
+        "current": { "selected": true, "text": "All", "value": "$__all" },
+        "datasource": { "type": "prometheus" },
+        "definition": "label_values(up{job=\"node_exporter\"}, instance)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Instance",
+        "multi": true,
+        "name": "instance",
+        "query": { "query": "label_values(up{job=\"node_exporter\"}, instance)", "refId": "A" },
+        "refresh": 1,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "GapTel Disk & Memory",
+  "uid": "gaptel-disk",
+  "version": 3,
+  "weekStart": ""
+}

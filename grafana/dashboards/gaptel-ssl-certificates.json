@@ -4,7 +4,15 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
   "id": null,
-  "links": [],
+  "links": [
+    {
+      "icon": "external link",
+      "tags": [],
+      "title": "Disk & Memory",
+      "type": "link",
+      "url": "/d/gaptel-disk/gaptel-disk-and-memory"
+    }
+  ],
   "liveNow": false,
   "panels": [
     {
@@ -16,7 +24,7 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
+      "datasource": { "type": "prometheus" },
       "description": "Minimum days until any monitored certificate expires.",
       "fieldConfig": {
         "defaults": {
@@ -44,7 +52,7 @@
       },
       "targets": [
         {
-          "expr": "min((probe_ssl_earliest_cert_expiry{job=\"blackbox_ssl_expiry\"} - time()) / 86400)",
+          "expr": "min((probe_ssl_earliest_cert_expiry{job=\"blackbox_ssl_expiry\", probe_target=~\"$probe_target\"} - time()) / 86400)",
           "refId": "A"
         }
       ],
@@ -52,7 +60,7 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
+      "datasource": { "type": "prometheus" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
@@ -85,7 +93,7 @@
       },
       "targets": [
         {
-          "expr": "sum(probe_success{job=\"blackbox_ssl_expiry\"})",
+          "expr": "sum(probe_success{job=\"blackbox_ssl_expiry\", probe_target=~\"$probe_target\"})",
           "refId": "A"
         }
       ],
@@ -93,7 +101,7 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
+      "datasource": { "type": "prometheus" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
@@ -117,7 +125,7 @@
       },
       "targets": [
         {
-          "expr": "count((probe_ssl_earliest_cert_expiry{job=\"blackbox_ssl_expiry\"} - time()) / 86400 < 30)",
+          "expr": "count((probe_ssl_earliest_cert_expiry{job=\"blackbox_ssl_expiry\", probe_target=~\"$probe_target\"} - time()) / 86400 < 30) or vector(0)",
           "refId": "A"
         }
       ],
@@ -125,7 +133,7 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
+      "datasource": { "type": "prometheus" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
@@ -149,7 +157,7 @@
       },
       "targets": [
         {
-          "expr": "count((probe_ssl_earliest_cert_expiry{job=\"blackbox_ssl_expiry\"} - time()) / 86400 < 14)",
+          "expr": "count((probe_ssl_earliest_cert_expiry{job=\"blackbox_ssl_expiry\", probe_target=~\"$probe_target\"} - time()) / 86400 < 14) or vector(0)",
           "refId": "A"
         }
       ],
@@ -165,7 +173,7 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
+      "datasource": { "type": "prometheus" },
       "description": "User panel and main page share the same hostname (gaptel.co) and typically the same TLS certificate.",
       "fieldConfig": {
         "defaults": {
@@ -258,31 +266,31 @@
       "pluginVersion": "11.0.0",
       "targets": [
         {
-          "expr": "(probe_ssl_earliest_cert_expiry{job=\"blackbox_ssl_expiry\"} - time()) / 86400",
+          "expr": "(probe_ssl_earliest_cert_expiry{job=\"blackbox_ssl_expiry\", probe_target=~\"$probe_target\"} - time()) / 86400",
           "format": "table",
           "instant": true,
           "refId": "days"
         },
         {
-          "expr": "probe_ssl_earliest_cert_expiry{job=\"blackbox_ssl_expiry\"} * 1000",
+          "expr": "probe_ssl_earliest_cert_expiry{job=\"blackbox_ssl_expiry\", probe_target=~\"$probe_target\"} * 1000",
           "format": "table",
           "instant": true,
           "refId": "expiry"
         },
         {
-          "expr": "probe_success{job=\"blackbox_ssl_expiry\"}",
+          "expr": "probe_success{job=\"blackbox_ssl_expiry\", probe_target=~\"$probe_target\"}",
           "format": "table",
           "instant": true,
           "refId": "success"
         },
         {
-          "expr": "probe_duration_seconds{job=\"blackbox_ssl_expiry\"}",
+          "expr": "probe_duration_seconds{job=\"blackbox_ssl_expiry\", probe_target=~\"$probe_target\"}",
           "format": "table",
           "instant": true,
           "refId": "duration"
         },
         {
-          "expr": "probe_tls_version_info{job=\"blackbox_ssl_expiry\"}",
+          "expr": "probe_tls_version_info{job=\"blackbox_ssl_expiry\", probe_target=~\"$probe_target\"}",
           "format": "table",
           "instant": true,
           "refId": "tls"
@@ -321,24 +329,17 @@
               "module 1": true,
               "Value #tls": true
             },
-            "indexByName": {
-              "panel": 0,
-              "service": 1,
-              "url": 2,
-              "Value #days": 3,
-              "Value #expiry": 4,
-              "Value #success": 5,
-              "version": 6,
-              "Value #duration": 7
-            },
             "renameByName": {
               "Value #days": "Days left",
               "Value #duration": "TLS probe (s)",
               "Value #expiry": "Expires at",
               "Value #success": "Probe OK",
               "panel": "Panel",
+              "panel 1": "Panel",
               "url": "URL",
+              "url 1": "URL",
               "service": "Service",
+              "service 1": "Service",
               "version": "TLS version"
             }
           }
@@ -355,7 +356,7 @@
       "type": "row"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
+      "datasource": { "type": "prometheus" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
@@ -390,7 +391,7 @@
       },
       "targets": [
         {
-          "expr": "(probe_ssl_earliest_cert_expiry{job=\"blackbox_ssl_expiry\"} - time()) / 86400",
+          "expr": "(probe_ssl_earliest_cert_expiry{job=\"blackbox_ssl_expiry\", probe_target=~\"$probe_target\"} - time()) / 86400",
           "legendFormat": "{{panel}} ({{probe_target}})",
           "refId": "A"
         }
@@ -399,7 +400,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
+      "datasource": { "type": "prometheus" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "palette-classic" },
@@ -420,7 +421,7 @@
       },
       "targets": [
         {
-          "expr": "probe_success{job=\"blackbox_ssl_expiry\"}",
+          "expr": "probe_success{job=\"blackbox_ssl_expiry\", probe_target=~\"$probe_target\"}",
           "legendFormat": "{{panel}}",
           "refId": "A"
         }
@@ -432,12 +433,32 @@
   "refresh": "1m",
   "schemaVersion": 39,
   "tags": ["gaptel", "gap", "ssl", "tls", "certificates"],
-  "templating": { "list": [] },
+  "templating": {
+    "list": [
+      {
+        "allValue": ".*",
+        "current": { "selected": true, "text": "All", "value": "$__all" },
+        "datasource": { "type": "prometheus" },
+        "definition": "label_values(probe_ssl_earliest_cert_expiry{job=\"blackbox_ssl_expiry\"}, probe_target)",
+        "includeAll": true,
+        "label": "URL",
+        "multi": true,
+        "name": "probe_target",
+        "query": {
+          "query": "label_values(probe_ssl_earliest_cert_expiry{job=\"blackbox_ssl_expiry\"}, probe_target)",
+          "refId": "A"
+        },
+        "refresh": 1,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
   "time": { "from": "now-7d", "to": "now" },
   "timepicker": {},
   "timezone": "browser",
   "title": "GapTel SSL certificates",
   "uid": "gaptel-ssl-certificates",
-  "version": 2,
+  "version": 6,
   "weekStart": ""
 }

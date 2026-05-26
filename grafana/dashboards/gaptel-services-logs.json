@@ -1,0 +1,235 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "color-background" },
+            "inspect": false
+          },
+          "mappings": [
+            {
+              "options": {
+                "0": { "color": "red", "index": 0, "text": "DOWN" },
+                "1": { "color": "green", "index": 1, "text": "UP" }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Latency (ms)" },
+            "properties": [
+              { "id": "unit", "value": "ms" },
+              { "id": "decimals", "value": 0 },
+              { "id": "custom.cellOptions", "value": { "type": "auto" } },
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "transparent" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Category" },
+            "properties": [
+              { "id": "custom.width", "value": 140 },
+              { "id": "custom.cellOptions", "value": { "type": "auto" } },
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "transparent" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Service" },
+            "properties": [
+              { "id": "custom.width", "value": 180 },
+              { "id": "custom.cellOptions", "value": { "type": "auto" } },
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "transparent" } },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "View ${__value.text} logs",
+                    "url": "/d/gaptel-services-logs/gaptel-services-and-logs?${__url_time_range}&var-service=${__value.text}",
+                    "targetBlank": false
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Endpoint" },
+            "properties": [
+              { "id": "custom.cellOptions", "value": { "type": "auto" } },
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "transparent" } }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 0 },
+      "id": 10,
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "showHeader": true,
+        "sortBy": [{ "desc": false, "displayName": "Category" }]
+      },
+      "pluginVersion": "11.3.1",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
+          "expr": "probe_success{job=~\"blackbox_.*\", job!=\"blackbox_ssl_expiry\"}",
+          "format": "table",
+          "instant": true,
+          "refId": "status"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
+          "expr": "probe_duration_seconds{job=~\"blackbox_.*\", job!=\"blackbox_ssl_expiry\"} * 1000",
+          "format": "table",
+          "instant": true,
+          "refId": "latency"
+        }
+      ],
+      "description": "Click a **Service** name to load that container's Docker logs below. Uses the same health probes as the status board.",
+      "title": "Service status",
+      "transformations": [
+        { "id": "seriesToColumns", "options": { "byField": "service" } },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Time 1": true,
+              "Time 2": true,
+              "__name__": true,
+              "__name__ 1": true,
+              "__name__ 2": true,
+              "instance": true,
+              "instance 1": true,
+              "instance 2": true,
+              "job": true,
+              "job 1": true,
+              "job 2": true,
+              "panel": true,
+              "panel 1": true,
+              "panel 2": true,
+              "url": true,
+              "url 1": true,
+              "url 2": true
+            },
+            "renameByName": {
+              "Value #latency": "Latency (ms)",
+              "Value #status": "Status",
+              "category": "Category",
+              "category 1": "Category",
+              "probe_target": "Endpoint",
+              "probe_target 1": "Endpoint",
+              "service": "Service",
+              "service 1": "Service"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "gap_loki" },
+      "gridPos": { "h": 14, "w": 24, "x": 0, "y": 12 },
+      "id": 40,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "gap_loki" },
+          "expr": "{job=\"docker\", service=\"$service\"}",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "description": "Docker stdout/stderr for the selected service. Click a row in the table above or use the Service dropdown.",
+      "title": "Service logs — $service",
+      "type": "logs"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "gap_loki" },
+      "gridPos": { "h": 14, "w": 24, "x": 0, "y": 26 },
+      "id": 50,
+      "options": {
+        "dedupStrategy": "none",
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "gap_loki" },
+          "expr": "{job=\"docker\"}",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "description": "All Docker containers on this host (app + monitoring). Not filtered by the selected service.",
+      "title": "All system logs",
+      "type": "logs"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["gaptel", "gap", "logs", "docker", "services"],
+  "templating": {
+    "list": [
+      {
+        "current": { "selected": true, "text": "Select a service", "value": "__no_selection__" },
+        "datasource": { "type": "loki", "uid": "gap_loki" },
+        "definition": "label_values({job=\"docker\"}, service)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Service",
+        "multi": false,
+        "name": "service",
+        "options": [
+          { "selected": true, "text": "Select a service", "value": "__no_selection__" }
+        ],
+        "query": "label_values({job=\"docker\"}, service)",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "GapTel services & logs",
+  "uid": "gaptel-services-logs",
+  "version": 1,
+  "weekStart": ""
+}

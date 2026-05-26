@@ -28,6 +28,19 @@ groups:
           summary: 'High memory usage on {{ $labels.instance }}'
           description: 'Memory usage has been above 80% for 5 minutes (current {{ $value | printf "%.1f" }}%).'
 
+      - alert: DiskUsageHigh
+        expr: |
+          100 - (
+            max by (instance, mountpoint) (node_filesystem_avail_bytes{fstype=~"ext4|xfs|btrfs", mountpoint!~"/etc/(resolv|hostname)"})
+            / max by (instance, mountpoint) (node_filesystem_size_bytes{fstype=~"ext4|xfs|btrfs", mountpoint!~"/etc/(resolv|hostname)"})
+          ) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Disk usage above 90% on {{ $labels.instance }} ({{ $labels.mountpoint }})'
+          description: 'Filesystem {{ $labels.device }} mounted at {{ $labels.mountpoint }} is {{ $value | printf "%.1f" }}% full.'
+
   - name: gaptel_jtapi
     rules:
       - alert: JtapiDisconnected
@@ -71,25 +84,25 @@ groups:
       - alert: SslCertificateExpiringSoon
         expr: |
           (
-            probe_ssl_earliest_cert_expiry{job="blackbox_ssl_expiry"} - time()
+            probe_ssl_earliest_cert_expiry{job=~"blackbox_ssl.*"} - time()
           ) / 86400 < 14
         for: 1h
         labels:
           severity: warning
         annotations:
-          summary: 'TLS certificate expiring soon for {{ $labels.panel | default $labels.service }} ({{ $labels.probe_target }})'
+          summary: 'TLS certificate expiring soon for {{ if $labels.panel }}{{ $labels.panel }}{{ else }}{{ $labels.service }}{{ end }} ({{ $labels.probe_target }})'
           description: 'Certificate expires in less than 14 days ({{ $value | printf "%.1f" }} days remaining).'
 
       - alert: SslCertificateExpiringCritical
         expr: |
           (
-            probe_ssl_earliest_cert_expiry{job="blackbox_ssl_expiry"} - time()
+            probe_ssl_earliest_cert_expiry{job=~"blackbox_ssl.*"} - time()
           ) / 86400 < 7
         for: 30m
         labels:
           severity: critical
         annotations:
-          summary: 'TLS certificate expiring within 7 days for {{ $labels.panel | default $labels.service }} ({{ $labels.probe_target }})'
+          summary: 'TLS certificate expiring within 7 days for {{ if $labels.panel }}{{ $labels.panel }}{{ else }}{{ $labels.service }}{{ end }} ({{ $labels.probe_target }})'
           description: 'Certificate expires in less than 7 days ({{ $value | printf "%.1f" }} days remaining).'
 
   - name: gaptel_api

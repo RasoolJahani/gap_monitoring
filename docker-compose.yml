@@ -38,6 +38,11 @@ services:
     command:
       - "--config.file=/config/blackbox.yml"
     restart: always
+    # Route public vhosts to the host nginx (avoids NAT hairpin to own public IP).
+    extra_hosts:
+      - "admin.gaptel.co:host-gateway"
+      - "gaptel.co:host-gateway"
+      - "api.gaptel.co:host-gateway"
     volumes:
       - ./blackbox.yml:/config/blackbox.yml:ro
     networks:
@@ -58,6 +63,32 @@ services:
       - /:/rootfs:ro
     networks:
       - monitoring
+
+  loki:
+    image: grafana/loki:3.2.1
+    container_name: gaptel-loki
+    command: -config.file=/etc/loki/loki-config.yml
+    restart: always
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki_data:/loki
+    networks:
+      - monitoring
+
+  promtail:
+    image: grafana/promtail:3.2.1
+    container_name: gaptel-promtail
+    command: -config.file=/etc/promtail/config.yml
+    restart: always
+    volumes:
+      - ./promtail/config.yml:/etc/promtail/config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - promtail_positions:/tmp
+    networks:
+      - monitoring
+    depends_on:
+      - loki
 
   grafana:
     image: grafana/grafana:11.3.1
@@ -81,11 +112,14 @@ services:
       - net
     depends_on:
       - prometheus
+      - loki
 
 volumes:
   prometheus_data:
   grafana_data:
   alertmanager_data:
+  loki_data:
+  promtail_positions:
 
 networks:
   # App production compose uses `monitoring: external: true` — start this stack first.

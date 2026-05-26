@@ -15,12 +15,15 @@ rule_files:
 # Backend services must set OBSERVABILITY_PORT (9101, 9102, …) in the app compose file.
 
 scrape_configs:
+  # Host metrics: CPU, memory, disk (node_filesystem_*), network, etc.
   - job_name: node_exporter
+    scrape_interval: 15s
     static_configs:
       - targets: ["node-exporter:9100"]
         labels:
           category: infrastructure
           service: host
+          instance: host
 
   - job_name: gap_backend_metrics
     metrics_path: /metrics
@@ -167,10 +170,10 @@ scrape_configs:
           category: infrastructure
     relabel_configs: *blackbox_relabel
 
-  # Public TLS certificate expiry (TCP+TLS; not HTTP — avoids false failures on 404 API roots).
+  # Public TLS certificates (TCP+TLS). extra_hosts on blackbox → host nginx :443.
   - job_name: blackbox_ssl_expiry
     scrape_interval: 60s
-    scrape_timeout: 20s
+    scrape_timeout: 25s
     metrics_path: /probe
     params:
       module: [tls_cert]
@@ -200,3 +203,8 @@ scrape_configs:
           url: https://api.gaptel.co/
           category: backend
     relabel_configs: *blackbox_relabel
+
+  # Blackbox exporter self-metrics (debug probe failures).
+  - job_name: blackbox_exporter
+    static_configs:
+      - targets: ["blackbox-exporter:9115"]

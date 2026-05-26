@@ -8,7 +8,7 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
+      "datasource": { "type": "prometheus" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
@@ -42,7 +42,7 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
+      "datasource": { "type": "prometheus" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
@@ -83,7 +83,7 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
+      "datasource": { "type": "prometheus" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
@@ -117,7 +117,7 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
+      "datasource": { "type": "prometheus" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
@@ -151,7 +151,7 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
+      "datasource": { "type": "prometheus" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
@@ -185,7 +185,7 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
+      "datasource": { "type": "prometheus" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
@@ -210,7 +210,7 @@
       },
       "targets": [
         {
-          "expr": "count(probe_success{job=~\"blackbox_.*\"} == 1) or vector(0)",
+          "expr": "count(probe_success{job=~\"blackbox_.*\", job!=\"blackbox_ssl_expiry\"} == 1) or vector(0)",
           "refId": "A"
         }
       ],
@@ -218,7 +218,7 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
+      "datasource": { "type": "prometheus" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
@@ -243,7 +243,7 @@
       },
       "targets": [
         {
-          "expr": "count(probe_success{job=~\"blackbox_.*\"} == 0) or vector(0)",
+          "expr": "count(probe_success{job=~\"blackbox_.*\", job!=\"blackbox_ssl_expiry\"} == 0) or vector(0)",
           "refId": "A"
         }
       ],
@@ -251,7 +251,7 @@
       "type": "stat"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
+      "datasource": { "type": "prometheus" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
@@ -291,7 +291,7 @@
       },
       "targets": [
         {
-          "expr": "probe_success{job=~\"blackbox_.*\"}",
+          "expr": "probe_success{job=~\"blackbox_.*\", job!=\"blackbox_ssl_expiry\"}",
           "legendFormat": "{{category}} / {{service}}",
           "refId": "A"
         }
@@ -300,7 +300,7 @@
       "type": "state-timeline"
     },
     {
-      "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
+      "datasource": { "type": "prometheus" },
       "fieldConfig": {
         "defaults": {
           "color": { "mode": "thresholds" },
@@ -372,26 +372,24 @@
       "pluginVersion": "11.3.1",
       "targets": [
         {
-          "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
-          "expr": "probe_success{job=~\"blackbox_.*\"}",
+          "datasource": { "type": "prometheus" },
+          "expr": "probe_success{job=~\"blackbox_.*\", job!=\"blackbox_ssl_expiry\"}",
           "format": "table",
           "instant": true,
           "refId": "status"
         },
         {
-          "datasource": { "type": "prometheus", "uid": "gap_prometheus" },
-          "expr": "probe_duration_seconds{job=~\"blackbox_.*\"} * 1000",
+          "datasource": { "type": "prometheus" },
+          "expr": "probe_duration_seconds{job=~\"blackbox_.*\", job!=\"blackbox_ssl_expiry\"} * 1000",
           "format": "table",
           "instant": true,
           "refId": "latency"
         }
       ],
+      "description": "Docker/internal health checks only. Public TLS certificates are on the **GapTel SSL certificates** dashboard.",
       "title": "Service status",
       "transformations": [
-        {
-          "id": "seriesToColumns",
-          "options": { "byField": "service" }
-        },
+        { "id": "seriesToColumns", "options": { "byField": "service" } },
         {
           "id": "organize",
           "options": {
@@ -407,14 +405,13 @@
               "instance 2": true,
               "job": true,
               "job 1": true,
-              "job 2": true
-            },
-            "indexByName": {
-              "Category": 0,
-              "Service": 1,
-              "Status": 2,
-              "Latency (ms)": 3,
-              "Endpoint": 4
+              "job 2": true,
+              "panel": true,
+              "panel 1": true,
+              "panel 2": true,
+              "url": true,
+              "url 1": true,
+              "url 2": true
             },
             "renameByName": {
               "Value #latency": "Latency (ms)",
@@ -441,6 +438,6 @@
   "timezone": "browser",
   "title": "GapTel status board",
   "uid": "gaptel-status-board",
-  "version": 1,
+  "version": 4,
   "weekStart": ""
 }

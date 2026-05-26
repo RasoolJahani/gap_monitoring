@@ -10,7 +10,7 @@ Prometheus, Blackbox Exporter, and Grafana for the GapTel platform.
 
 | File                                 | Purpose                                                                |
 | ------------------------------------ | ---------------------------------------------------------------------- |
-| **`docker-compose.yml`**             | Production: Prometheus, Alertmanager, Blackbox, Node Exporter, Grafana |
+| **`docker-compose.yml`**             | Production: Prometheus, Alertmanager, Blackbox, Node Exporter, Loki, Promtail, Grafana |
 | **`docker-compose.dev.yml`**         | Local dev (gitignored — copy from example)                             |
 | **`docker-compose.dev.example.yml`** | Template for local dev                                                 |
 | **`prometheus.yml`**                 | Production scrape targets + alerting                                   |
@@ -62,6 +62,12 @@ Production: expose Grafana via your reverse proxy; set `GF_SERVER_ROOT_URL` in `
 | GapTel overview                          | `gaptel-overview`         |
 | GapTel status board (wallboard + uptime) | `gaptel-status-board`     |
 | GapTel SSL certificates                  | `gaptel-ssl-certificates` |
+| GapTel Disk & Memory                     | `gaptel-disk`             |
+| GapTel services & logs (status + Docker) | `gaptel-services-logs`    |
+
+**Services & logs dashboard** — same service status table as the status board; click a **Service** name (or use the dropdown) to view that container’s Docker logs in Loki. **All system logs** at the bottom always shows every container on the host.
+
+Requires **Loki** + **Promtail** (included in `docker-compose.yml`). Promtail needs read access to `/var/run/docker.sock` and `/var/lib/docker/containers`. Log label `service` matches Prometheus probe names (`api-gateway`, `user-panel`, …); dev compose maps `frontend` → `user-panel` and `admin-frontend` → `admin-panel`.
 
 **Status board top row (PromQL):**
 
@@ -80,11 +86,14 @@ Production: expose Grafana via your reverse proxy; set `GF_SERVER_ROOT_URL` in `
 | `HighCpuUsage` / `HighMemoryUsage`       | Host > 80% for 5m (`node-exporter`)                  |
 | `JtapiDisconnected`                      | `jtapi_connection_status == 0` for 1m                |
 | `HighFailedLoginRate`                    | > 50% failed auth attempts for 2m                    |
-| `SslCertificateExpiringSoon`             | TLS cert expires in < 14 days (blackbox `https_ssl`) |
+| `SslCertificateExpiringSoon`             | TLS cert expires in < 14 days (blackbox `https_2xx`)   |
 | `SslCertificateExpiringCritical`         | TLS cert expires in < 7 days                         |
+| `DiskUsageHigh`                          | Disk > 90% on ext4/xfs (node_exporter)               |
 | `HighApiErrorRate` / `HighApiLatencyP95` | api-gateway HTTP metrics                             |
 
-Public TLS certificates are checked via Blackbox **`tls_cert`** (TCP+TLS on port 443, no HTTP status) in job `blackbox_ssl_expiry`. Grafana **Expires at** uses `probe_ssl_earliest_cert_expiry * 1000` (Prometheus is seconds; Grafana dates need ms).
+Public TLS certificates use Blackbox **`https_2xx`** in job `blackbox_ssl_expiry`. Full setup: **[docs/SSL-DISK-MONITORING.md](docs/SSL-DISK-MONITORING.md)**.
+
+**Same-server TLS:** `blackbox-exporter` uses `extra_hosts` so `*.gaptel.co` resolves to the host gateway (local nginx on :443) instead of the public IP (NAT hairpin timeout).
 
 Configure notification channels in **`alertmanager.yml`** (webhook, email, etc.).
 
@@ -154,7 +163,7 @@ Default branch: **`main`**. Local `docker-compose.dev.yml` is not committed.
 
 ## Deploy to servers
 
-Sync production files to a remote host (same targets as `gap_backend/scripts/rsync.sh`):
+Sync production files to a remote host (`docker-compose.yml`, `prometheus.yml`, `alert.rules.yml`, `alertmanager.yml`, `blackbox.yml`, `loki/`, `promtail/`, `grafana/`, `docs/`):
 
 ```bash
 ./scripts/rsync.sh gaptelco
@@ -172,6 +181,7 @@ After rsync, on the server:
 ```bash
 cd /home/gaptel/mystorage/docker_apps/gap/monitoring   # path varies by target
 docker compose up -d
+docker compose restart prometheus blackbox-exporter
 ```
 
 Ensure `.env` exists on the server (not synced — copy from `.env.example` once).

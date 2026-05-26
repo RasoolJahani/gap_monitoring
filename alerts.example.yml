@@ -1,0 +1,31 @@
+# Reference alerting rules for SSL expiry and disk usage.
+# Production mounts this file as /etc/prometheus/alert.rules.yml (see prometheus.yml rule_files).
+# Copy the groups below into alert.rules.yml or merge with existing GapTel rules.
+
+groups:
+  - name: ssl_and_disk
+    rules:
+      - alert: SslCertificateExpiringSoon
+        expr: |
+          (
+            probe_ssl_earliest_cert_expiry{job=~"blackbox_ssl.*"} - time()
+          ) / 86400 < 14
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: 'SSL certificate expiring in < 14 days for {{ $labels.probe_target }}'
+          description: '{{ $value | printf "%.1f" }} days remaining until expiry.'
+
+      - alert: DiskUsageHigh
+        expr: |
+          100 - (
+            node_filesystem_avail_bytes{fstype=~"ext4|xfs", mountpoint!~"/etc/(resolv|hostname)"}
+            / node_filesystem_size_bytes{fstype=~"ext4|xfs", mountpoint!~"/etc/(resolv|hostname)"}
+          ) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Disk usage above 90% on {{ $labels.instance }} ({{ $labels.mountpoint }})'
+          description: 'Device {{ $labels.device }} is {{ $value | printf "%.1f" }}% full.'

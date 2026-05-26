@@ -8,6 +8,18 @@ modules:
       method: GET
       preferred_ip_protocol: ip4
 
+  # HTTPS variant of http_2xx — TLS required; exposes probe_ssl_earliest_cert_expiry.
+  https_2xx:
+    prober: http
+    timeout: 20s
+    http:
+      valid_http_versions: ['HTTP/1.1', 'HTTP/2.0']
+      valid_status_codes: [200, 301, 302, 303, 307, 308, 404]
+      method: GET
+      preferred_ip_protocol: ip4
+      fail_if_ssl: false
+      fail_if_not_ssl: true
+
   # Frontends may return 200/301/302/304 for SPA shell and nginx.
   http_frontend:
     prober: http
@@ -25,10 +37,11 @@ modules:
   # TLS certificate check only (no HTTP status) — reliable for SPAs and APIs without a public /.
   tls_cert:
     prober: tcp
-    timeout: 15s
+    timeout: 20s
     tcp:
       tls: true
       preferred_ip_protocol: ip4
+      ip_protocol_fallback: false
 
   # Legacy HTTP+TLS probe (kept for reference; do not use for api.gaptel.co — root returns 404).
   https_ssl:

@@ -3,8 +3,9 @@
 # Usage: ./scripts/rsync.sh <target> [<target> ...]
 # Run from anywhere; paths are resolved from this repo root.
 #
-# Syncs production files only (compose, prometheus, blackbox, grafana dashboards).
-# Does not sync docker-compose.dev.yml, prometheus.dev.yml, or .env.
+# Syncs production files only (compose, prometheus, alerts, blackbox, grafana, docs).
+# Does not sync: docker-compose.dev.yml, prometheus.dev.yml, alerts.example.yml, or .env
+# (create .env on the server once from .env.example).
 
 set -euo pipefail
 
@@ -37,9 +38,19 @@ fi
 SYNC_ALLOWLIST=(
   --include="docker-compose.yml"
   --include="prometheus.yml"
+  --include="alert.rules.yml"
+  --include="alertmanager.yml"
   --include="blackbox.yml"
   --include="grafana/"
   --include="grafana/***"
+  --include="loki/"
+  --include="loki/***"
+  --include="promtail/"
+  --include="promtail/***"
+  --include="docs/"
+  --include="docs/***"
+  --include="scripts/"
+  --include="scripts/***"
   --include=".env.example"
   --include="README.md"
   --exclude="*"
@@ -61,3 +72,9 @@ done
 
 echo ""
 echo "Rsync finished for: $*"
+echo ""
+echo "On each server:"
+echo "  cd <remote monitoring dir>"
+echo "  docker compose up -d"
+echo "  docker compose restart prometheus blackbox-exporter loki promtail grafana"
+echo "  bash scripts/verify-prometheus.sh"
