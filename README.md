@@ -2,6 +2,8 @@
 
 Prometheus, Blackbox Exporter, and Grafana for the GapTel platform.
 
+**Detailed docs:** [`DOCUMENTATION.md`](./DOCUMENTATION.md) · SSL/disk setup: [`docs/SSL-DISK-MONITORING.md`](./docs/SSL-DISK-MONITORING.md)
+
 **Production** uses Docker network **`monitoring`** (this repo creates it; your app `docker-compose.yml` attaches it as `external: true`).
 
 **Local dev** may use **`gaptel_monitoring`** via `docker-compose.dev.yml` (see example file).
@@ -86,12 +88,14 @@ Requires **Loki** + **Promtail** (included in `docker-compose.yml`). Promtail ne
 | `HighCpuUsage` / `HighMemoryUsage`       | Host > 80% for 5m (`node-exporter`)                  |
 | `JtapiDisconnected`                      | `jtapi_connection_status == 0` for 1m                |
 | `HighFailedLoginRate`                    | > 50% failed auth attempts for 2m                    |
-| `SslCertificateExpiringSoon`             | TLS cert expires in < 14 days (blackbox `https_2xx`)   |
-| `SslCertificateExpiringCritical`         | TLS cert expires in < 7 days                         |
-| `DiskUsageHigh`                          | Disk > 90% on ext4/xfs (node_exporter)               |
-| `HighApiErrorRate` / `HighApiLatencyP95` | api-gateway HTTP metrics                             |
+| `SslCertificateExpiringSoon`             | TLS cert expires in < 14 days (blackbox `tls_cert`)      |
+| `SslCertificateExpiringCritical`         | TLS cert expires in < 7 days                             |
+| `DiskUsageHigh`                          | Disk > 90% on ext4/xfs/btrfs (node_exporter)             |
+| `HighApiErrorRate` / `HighApiLatencyP95` | api-gateway HTTP metrics                               |
+| `HighConcurrentCalls`                    | `jtapi_concurrent_calls` > 500 for 5m                    |
+| `BlackboxProbeDown`                      | Any blackbox probe (except SSL expiry job) failed for 2m |
 
-Public TLS certificates use Blackbox **`https_2xx`** in job `blackbox_ssl_expiry`. Full setup: **[docs/SSL-DISK-MONITORING.md](docs/SSL-DISK-MONITORING.md)**.
+Public TLS certificates use Blackbox **`tls_cert`** module in job `blackbox_ssl_expiry` (TCP+TLS to `host:443`, not HTTP). Full setup: **[docs/SSL-DISK-MONITORING.md](docs/SSL-DISK-MONITORING.md)**.
 
 **Same-server TLS:** `blackbox-exporter` uses `extra_hosts` so `*.gaptel.co` resolves to the host gateway (local nginx on :443) instead of the public IP (NAT hairpin timeout).
 
@@ -130,12 +134,12 @@ healthcheck:
   test: ["CMD", "curl", "-f", "http://localhost:8081/api/wallboard/health"]
 ```
 
-**Frontends** — nginx listens on **port 80** (not 8080/8081). Host ports `8090:8080` do not change the internal probe URL.
+**Frontends** — nginx listens on **port 80** inside the container. Prometheus probes **`http://user-panel:80/`** and **`http://admin-panel:80/`** (root path; `/health` also exists after nginx config deploy).
 
 | Compose service | Blackbox probe                 |
 | --------------- | ------------------------------ |
-| `user-panel`    | `http://user-panel:80/health`  |
-| `admin-panel`   | `http://admin-panel:80/health` |
+| `user-panel`    | `http://user-panel:80/`        |
+| `admin-panel`   | `http://admin-panel:80/`       |
 
 Deploy updated `gaptel-user/nginx.conf` and `gaptel-admin/nginx.conf` (includes `/health`), then reload panels.
 
@@ -147,6 +151,10 @@ environment:
 ```
 
 Without `OBSERVABILITY_PORT`, Nest services have no HTTP listener and Prometheus shows them as DOWN.
+
+**Production scrape targets** (`prometheus.yml` job `gap_backend_metrics`): `api-gateway:3000`, `auth-service:9101`, `user-service:9102`, `cucm-service:9103`, `cdr-service:9104`, `file-service:9105`, **`config-service:9106`**, `cdr-processor:3004`, **`recording-watcher:9107`**, **`asterisk-service:9108`**.
+
+**JTAPI health probe:** production blackbox may use `/api/wallboard/health` on port 8081; dev compose may use Actuator `/health` — check your `prometheus.dev.yml` vs `prometheus.yml`.
 
 ## Networks
 

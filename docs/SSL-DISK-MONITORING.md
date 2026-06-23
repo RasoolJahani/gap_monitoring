@@ -19,11 +19,11 @@ Stack: **Prometheus** + **Blackbox Exporter** (SSL) + **Node Exporter** (disk) +
         instance: host
 ```
 
-Metrics used for disk panels/alerts: `node_filesystem_avail_bytes`, `node_filesystem_size_bytes` (filter `fstype=~"ext4|xfs"`).
+Metrics used for disk panels/alerts: `node_filesystem_avail_bytes`, `node_filesystem_size_bytes` (filter `fstype=~"ext4|xfs|btrfs"`).
 
-### Blackbox Exporter — HTTPS SSL probes
+### Blackbox Exporter — TLS certificate probes
 
-Blackbox runs the **`https_2xx`** module (HTTPS variant of `http_2xx`: requires TLS, exposes `probe_ssl_earliest_cert_expiry`).
+Production uses the **`tls_cert`** module (TCP+TLS to `host:443`; exposes `probe_ssl_earliest_cert_expiry` without requiring a valid HTTP response).
 
 ```yaml
 - job_name: blackbox_ssl_expiry
@@ -31,15 +31,18 @@ Blackbox runs the **`https_2xx`** module (HTTPS variant of `http_2xx`: requires 
   scrape_timeout: 25s
   metrics_path: /probe
   params:
-    module: [https_2xx]
+    module: [tls_cert]
   static_configs:
-    - targets: ["https://admin.gaptel.co/"]
+    - targets: ["admin.gaptel.co:443"]
       labels:
         service: admin-panel
-    - targets: ["https://gaptel.co/"]
+    - targets: ["gaptel.co:443"]
       labels:
         service: user-panel
-    - targets: ["https://api.gaptel.co/health"]
+    - targets: ["gaptel.co:443"]
+      labels:
+        service: main-page
+    - targets: ["api.gaptel.co:443"]
       labels:
         service: api-gateway
   relabel_configs:
@@ -51,7 +54,7 @@ Blackbox runs the **`https_2xx`** module (HTTPS variant of `http_2xx`: requires 
       target_label: probe_target
 ```
 
-**Add targets:** append more `https://your-host/` lines under `static_configs`.
+**Add targets:** append more `hostname:443` lines under `static_configs`.
 
 **Same-server deploy:** in `docker-compose.yml`, map public hostnames to the host gateway so probes hit local nginx (not NAT hairpin):
 
@@ -90,8 +93,8 @@ Mounted in Prometheus as `/etc/prometheus/alert.rules.yml` (see `rule_files` in 
 - alert: DiskUsageHigh
   expr: |
     100 - (
-      node_filesystem_avail_bytes{fstype=~"ext4|xfs", mountpoint!~"/etc/(resolv|hostname)"}
-      / node_filesystem_size_bytes{fstype=~"ext4|xfs", mountpoint!~"/etc/(resolv|hostname)"}
+      node_filesystem_avail_bytes{fstype=~"ext4|xfs|btrfs", mountpoint!~"/etc/(resolv|hostname)"}
+      / node_filesystem_size_bytes{fstype=~"ext4|xfs|btrfs", mountpoint!~"/etc/(resolv|hostname)"}
     ) * 100 > 90
   for: 5m
   labels:
@@ -106,20 +109,21 @@ Validate: `docker exec gaptel-prometheus promtool check rules /etc/prometheus/al
 
 ## 3. Blackbox module (`blackbox.yml`)
 
+Production SSL job uses **`tls_cert`**:
+
 ```yaml
-https_2xx:
-  prober: http
+tls_cert:
+  prober: tcp
   timeout: 20s
-  http:
-    valid_http_versions: ['HTTP/1.1', 'HTTP/2.0']
-    valid_status_codes: [200, 301, 302, 303, 307, 308, 404]
-    method: GET
+  tcp:
+    tls: true
     preferred_ip_protocol: ip4
-    fail_if_ssl: false
-    fail_if_not_ssl: true
+    ip_protocol_fallback: false
 ```
 
-Plain `http_2xx` is for **HTTP only** (internal health checks). Use **`https_2xx`** for public HTTPS + certificate expiry.
+**`https_2xx`** (HTTP GET over TLS) is kept for reference but is **not** used for production SSL expiry in current `prometheus.yml` — some endpoints (e.g. API root) return 404 and would fail HTTP probes.
+
+Plain **`http_2xx`** is for **HTTP only** (internal microservice health checks). **`http_frontend`** probes SPA nginx on port 80.
 
 ---
 
@@ -139,13 +143,13 @@ Two separate dashboards (no mixed SSL + disk panels):
 | Days left | `(probe_ssl_earliest_cert_expiry{job="blackbox_ssl_expiry"} - time()) / 86400` |
 | Probe OK | `probe_success{job="blackbox_ssl_expiry"}` |
 
-**Variable:** `probe_target` (HTTPS URL filter)
+**Variable:** `probe_target` (host:443 filter)
 
 ### Disk dashboard (`gaptel-disk`)
 
 | Panel | PromQL |
 | ----- | ------ |
-| Disk used % | `100 - ((node_filesystem_avail_bytes{fstype=~"ext4\|xfs", job="node_exporter"} / node_filesystem_size_bytes{...}) * 100)` |
+| Disk used % | `100 - ((node_filesystem_avail_bytes{fstype=~"ext4\|xfs\|btrfs", job="node_exporter"} / node_filesystem_size_bytes{...}) * 100)` |
 | Memory used % | `(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100` |
 
 **Variable:** `instance` (node_exporter only)
@@ -158,6 +162,8 @@ Two separate dashboards (no mixed SSL + disk panels):
 2. `docker compose up -d` → **Dashboards** → **GapTel SSL certificates** or **GapTel Disk & Memory**.
 
 **Manual import:** Grafana → **Import** → upload `gaptel-ssl-certificates.json` or `gaptel-disk.json`.
+
+**Grafana datasources:** Prometheus UID `gap_prometheus`, Loki UID `gap_loki` (see `grafana/provisioning/datasources/`).
 
 ---
 
@@ -173,8 +179,10 @@ curl -sG 'http://localhost:9090/api/v1/query' \
 
 # Disk used %
 curl -sG 'http://localhost:9090/api/v1/query' \
-  --data-urlencode 'query=100 - ((node_filesystem_avail_bytes{fstype=~"ext4|xfs",mountpoint="/"} / node_filesystem_size_bytes{fstype=~"ext4|xfs",mountpoint="/"}) * 100)'
+  --data-urlencode 'query=100 - ((node_filesystem_avail_bytes{fstype=~"ext4|xfs|btrfs",mountpoint="/"} / node_filesystem_size_bytes{fstype=~"ext4|xfs|btrfs",mountpoint="/"}) * 100)'
 ```
+
+Helper script: `scripts/verify-prometheus.sh`
 
 ---
 
@@ -187,3 +195,5 @@ docker compose restart prometheus blackbox-exporter
 ```
 
 Confirm in Prometheus → **Status → Targets**: `node_exporter` and `blackbox_ssl_expiry` are **UP**.
+
+*Last updated: June 2026.*
